@@ -57,7 +57,24 @@ class ProductRepository {
         return $this->database->getQuery($sql);
     }
 
+    public function getAllWithTax() {
+
+        $sql = " SELECT ID_PRODUCT, PRODUCT.NAME AS NAME, 
+		PRODUCT.DESCRIPTION AS DESCRIPTION, PRICE, 
+		PRODUCT_TYPE.NAME AS PRODUCT_TYPE 
+		FROM PRODUCT
+        INNER JOIN PRODUCT_TYPE
+        ON PRODUCT.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID_PRODUCT_TYPE
+		INNER JOIN PRODUCT_TYPE_TAX
+		ON PRODUCT_TYPE.ID_PRODUCT_TYPE = PRODUCT_TYPE_TAX.ID_PRODUCT_TYPE
+		INNER JOIN TAX
+		ON PRODUCT_TYPE_TAX.ID_TAX = TAX.ID_TAX ";
+
+        return $this->database->getQuery($sql);
+    }
+
     public function save(Product $product) {
+
         $statement = $this->database->getConnection()
         ->prepare( "INSERT INTO PRODUCT( ID_PRODUCT, NAME, DESCRIPTION, PRICE, PRODUCT_TYPE_ID) VALUES (nextval('id_product_seq'), :name, :description, :price, :productType )" );
         
@@ -70,6 +87,7 @@ class ProductRepository {
     }
 
     public function update(Product $Product) {
+        
         $statement = $this->database->getConnection()
         ->prepare( " UPDATE PRODUCT SET NAME = :name, DESCRIPTION = :description, PRICE = :price, PRODUCT_TYPE_ID = :product_type WHERE ID_PRODUCT = :id_product " );
         $statement->bindValue(':id_product', $Product->getId());

@@ -35,7 +35,7 @@ $dadosProduct = $productController->index();
 ?>
 <style>
   
-  select#produt 
+  select#product 
   {
     height: 2.5em;
   }
@@ -69,8 +69,8 @@ $dadosProduct = $productController->index();
           <div class="row g-3">
             <div class="row">
                 <div class="col-md-3">
-                  <label for="produt" class="form-label">Produto:</label>
-                  <select name="produt" id="produt" style="width:100%;"></select>
+                  <label for="product" class="form-label">Produto:</label>
+                  <select name="product" id="product" style="width:100%;"></select>
                 </div>
                 
                 <div class="col-md-3">
@@ -80,7 +80,7 @@ $dadosProduct = $productController->index();
 
                     $('#quantity').focusout(function(){
 
-                      fillProducts();
+                      fillProductParameter();
                     });
 
                     $(document).ready(function(){
@@ -96,6 +96,10 @@ $dadosProduct = $productController->index();
                   <input type="number" name="unity_price" id="unity_price" class="" min="0" style="width:100%;" disabled>
                 </div>
                 <div class="col-md-3">
+                  <label for="tax" class="form-label">Imposto:</label>
+                  <input type="number" name="tax" id="tax" class="" min="0" style="width:100%;" disabled>
+                </div>
+                <div class="col-md-3">
                   <label for="price" class="form-label">Preço:</label>
                   <input type="number" name="price" id="price" class="" min=0 style="width:100%;" disabled>
                 </div>
@@ -103,8 +107,8 @@ $dadosProduct = $productController->index();
             <div class="row">
               <div class="col-md-3">
                 <label for="addItem1" class="form-label"></label>
-                <button type="button" id="addItem1" class="w-100 btn btn-primary btn-lg" style="width:100%;">
-                  Adicionar item
+                <button type="button" id="addItem1" class="btn btn-outline-primary" style="margin-top: 2em;">
+                  <center>Adicionar item</center>
                 </button>
                 <script>
 
@@ -120,10 +124,12 @@ $dadosProduct = $productController->index();
               <table>
                 <thead>
                   <tr>
+                    <th scope="col">ID</th>
                     <th scope="col">Produto</th>
                     <th scope="col">Qtde</th>
-                    <th scope="col">Imposto</th>
                     <th scope="col">Preço unitário</th>
+                    <th scope="col">Imposto</th>
+                    <th scope="col">Preço Total</th>
                     <th scope="col">Remover item</th>
                   </tr>
                 </thead>
@@ -134,9 +140,11 @@ $dadosProduct = $productController->index();
               
             
             <hr class="my-4" />
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label for="btn_submit_form" class="form-label"></label>
-              <button class="w-100 btn btn-primary btn-lg" id="btn_submit_form" acao=<?php echo isset($dadosTax)? "update" : "insert" ?> action="insert" type="submit">Lançar vendas</button>
+              <button class="btn btn-outline-primary" id="btn_submit_form" acao="insert" action="insert" type="submit">
+                <center>Lançar vendas</center>
+              </button>
             </div>
         </div>
          
@@ -145,51 +153,94 @@ $dadosProduct = $productController->index();
 
     <script>
                 
+                var linha = 0;
+
                 function fillProducts()
                 {
                   
-                  let id = $('#produt').val();
-                   
+                  let id = $('#product').val();
+                  let product = $('#product').val(); 
+
                   $.post("/Controller/productController.php?method=query_up_to_date_product",{id},function(callback){
                    
                     for( i = 0; i < callback.id.length; i++ )
                     {
-                      if( id != null ){
-                       
-                        let soma = $('#quantity').val() * callback.price;
-
-                        $('#unity_price').val( callback.price );
-                        $('#price').val( ( soma.toFixed(2) ) );
-
-                      }else{
-                        
-                        $('#produt').append('<option value="'+callback.id[i]+'">'+callback.name[i]+'</option>');
-                      }
                       
+                      $('#product').append('<option value="'+callback.id[i]+'">'+callback.name[i]+'</option>');
                     }
 
                   },'json');
                 }
+
+
+
+                function fillProductParameter()
+                {
+                  let id = $('#product').val();
+                  let product = $('#product').val(); 
+
+                  takeTax();
+
+                  $.post("/Controller/productController.php?method=query_up_to_date_product",{id},function(callback){
+                   
+                    for( i = 0; i < callback.id.length; i++ )
+                    {
+                     
+                        let soma = ( ( $('#quantity').val() * callback.price ) + ( $('#quantity').val() * $('#tax').val() ) );
+
+                        $('#unity_price').val( callback.price );
+                        $('#price').val( ( soma.toFixed(2) ) );
+ 
+                    }
+
+                  },'json');
+                }
+
+
+
+                function takeTax()
+                {
+                  let id = $('#product').val();
+                  $.post("/Controller/productController.php?method=query_tax",{id}, function(callback)
+                  {
+                    let tax = callback.tax_percentage;
+                    $('#tax').val(tax.toFixed(2));
+                  },'json');
+                }
+
+
                 
                 function addLine()
                 {
                   
-                  
-                  let id = $('#produt').val();
+                  var id_product = '';
+                  let id = $('#product').val();
+                  let product = $('#product option:selected').text();
                   let quantity = $('#quantity').val();
                   let unity_price = $('#unity_price').val();
+                  let tax = $('#tax').val();
                   let price = $('#price').val();
                   
-                  $('#tb_product').append("<tr><td>"+id+"</td><td>"+quantity+"</td><td>"+unity_price+"</td><td>"+price+"</td><td><a href='javascript:;' class='exclude'><i class='fa fa-trash' id='' onclick='exclude(id)'></i></a></td></tr>");
+
+                  $('#tb_product').append("<tr id=linha_"+linha+"><td>"+id+"</td><td>"+product+"</td><td>"+quantity+"</td><td>"+unity_price+"</td><td>"+tax+"</td><td>"+price+"</td><td><a href='javascript:;' class='exclude'><i class='fa fa-trash' id='' onclick='exclude("+linha+")'></i></a></td></tr>");
                   
+                  var obj = {"linha":"linha_"+linha, "id_product":id, "quantity":quantity};
+
+                  
+                  localStorage.setItem("linha_"+linha, JSON.stringify(obj));
+                  
+                  linha++;
                 }
+
+
                 
-    </script>
+                function exclude(linha)
+                {
+                  $('#linha_'+linha).detach();
+                }        
+          
 
 
-    <script>
-          
-          
           $(document).ready(function(){
             
             let submit = document.getElementById('btn_submit_form');
@@ -198,26 +249,23 @@ $dadosProduct = $productController->index();
           
 
           
+
           function validateForm(e){
 
                     e.preventDefault();
-
-                    if( $('#name').val() == '' )
-                    {
-                      $('#mensagem').html('<div class="alert alert-danger" role="alert">'+'Campo obrigatório não preenchido'+'</div>').fadeIn(3000).fadeOut(3000);
-                      return;
+                  
+                    dadosForm ={};
+                    for (let i = 0; i < localStorage.length; i++){
+                      let key = localStorage.key(i);
+                      let value = localStorage.getItem(key);
+                      dadosForm = {key:value};
                     }
 
-                    let id_tax = $('#id_tax').val();
-                    let acao = $('#btn_submit_form').attr('acao');
-                    let dadosForm = $('#new_product_type').serialize();
+                    alert('fim');
 
-                    if( id_tax != '' ){
+                    acao = $('#btn_submit_form').attr('acao');
 
-                      dadosForm += '&id_tax=' + id_tax;
-                    }
-
-                    let address = 'App/Controller/taxController.php?method='+acao;
+                    let address = 'Controller/sallesController.php?method='+acao;
                                         
                     $.post(address, dadosForm, function(callback){
                         
@@ -234,9 +282,7 @@ $dadosProduct = $productController->index();
                         $('#mensagem').html('<div class="alert alert-'+classMessage+'" role="alert">'+callback.message+'</div>').fadeIn(3000).fadeOut(3000);
                         
                         setTimeout(function(){
-                          $.post('App/Frontend/search_tax.php', function(data){
-                            $('#main-content').html(data);
-                          });
+                          window.location.reload();
                         },6000);
 
                     },'json');

@@ -29,6 +29,12 @@ class TaxService{
         return $this->TaxRepository->getAll();
     }
 
+    public function getTaxByIdProduct($id)
+    {
+        exit('dim');
+        return $this->TaxRepository->getTaxByIdProduct($id);
+    }
+
     public function createProductType( $description, $taxPercentage ){
         
         $tax  =new Tax();

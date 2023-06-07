@@ -44,6 +44,38 @@ class TaxRepository {
         return null;
     }
 
+    public function getTaxByIdProduct($id){
+        
+        
+
+        $statement = $this->database->getConnection()
+        ->prepare(" SELECT * FROM PRODUCT
+        INNER JOIN PRODUCT_TYPE
+        ON PRODUCT.PRODUCT_TYPE_ID = PRODUCT_TYPE.ID_PRODUCT_TYPE
+		INNER JOIN PRODUCT_TYPE_TAX
+		ON PRODUCT_TYPE.ID_PRODUCT_TYPE = PRODUCT_TYPE_TAX.ID_PRODUCT_TYPE
+		INNER JOIN TAX
+		ON PRODUCT_TYPE_TAX.ID_TAX = TAX.ID_TAX
+        WHERE ID_PRODUCT = :id ");     
+
+        $statement->bindParam(':id', $id);
+        $statement->execute();
+
+        $data = $statement->fetch(PDO::FETCH_ASSOC);
+        
+        if ($data) {
+            $tax = new Tax();
+            $tax->setId($data['id_tax']);
+            $tax->setDescription($data['description']);
+            $tax->setTaxPercentage($data['tax_percentage']);
+            
+            return $tax;
+        }
+
+        return null;
+        
+    }
+
     public function getAll() {
 
         $sql = " SELECT ID_TAX, DESCRIPTION, 

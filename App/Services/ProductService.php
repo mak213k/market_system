@@ -23,10 +23,15 @@ class ProductService{
         
         return $this->productRepository->getById($id);
     }
-
+    
     public function getAllProduct()
     {
         return $this->productRepository->getAll();
+    }
+
+    public function getAllWithTax()
+    {
+        return $this->productRepository->getAllWithTax();
     }
 
     public function createProduct($name, $description, $price, $product_type){

@@ -16,6 +16,10 @@ use App\Controller\controller;
 use App\Repositories\ProductTypeRepository;
 use App\Services\ProductTypeService;
 use App\Controller\productTypeController;
+use App\Repositories\TaxRepository;
+
+use App\Services\TaxService;
+
 
 
 class productController implements controller
@@ -30,6 +34,12 @@ class productController implements controller
     public function index()
     {
         return $this->productService->getAllProduct();
+    }
+    
+    public function getAllWithTax()
+    {
+        
+        return $this->productService->getAllWithTax();
     }
 
     public function query($id)
@@ -123,37 +133,41 @@ if(isset($_GET['method'])){
 
             die( json_encode( array("status" => $status, "message"=>$message) ) );
             break;
+
         case 'query_up_to_date_product':
             
-            $idProduct = $_POST['id'];
+            $idProduct = isset($_POST['id'])? $_POST['id'] : '';
             
             if( intval($idProduct) ){
             
                 $dadosProduct = $productController->query($idProduct);
-            
+                
                 $product = array();
                 $i = 0;
                                                    
-                    //var_dump($value['name']);
+                if( isset($dadosProduct) && $dadosProduct != null ){   
+                    
                     $product['id_product'][$i] = $dadosProduct->getId();
                     $product['name'][$i] = $dadosProduct->getName();
                     $product['price'][$i] = $dadosProduct->getPrice();
                     $i++;
+                    
+                    die( json_encode( array("id" => $product['id_product'], "name" => $product['name'], "price" => $product['price'] ) ) );
+                }
                 
-                
-                die( json_encode( array("id" => $product['id_product'], "name" => $product['name'], "price" => $product['price'] ) ) );
+                return null;
             
             }else{
 
-                $dadosProduct = $productController->index();
-            
+                $dadosProduct = $productController->getAllWithTax();
+                
                 $product = array();
                 $i = 0;
 
                 foreach( $dadosProduct as $value )
                 {
                     
-                    //var_dump($value['name']);
+                    //
                     $product['id_product'][$i] = $value['id_product'];
                     $product['name'][$i] = $value['name'];
                     $product['price'][$i] = $value['price'];
@@ -165,6 +179,26 @@ if(isset($_GET['method'])){
             }
 
             break;
+        case 'query_tax':
+
+            $idProduct = $_POST['id'];
+            if( intval($idProduct) )
+            {
+
+                $dadosProduct = $productController->query($idProduct);
+                
+                $taxRepository = new TaxRepository($database);
+                $taxService = new TaxService($taxRepository);
+
+                $dadosTax = $taxService->getTaxByIdProduct($idProduct);
+                $taxPercentage = $dadosTax->getTaxPercentage();
+                
+                $valorCalculado = ( ( ($taxPercentage * $dadosProduct->getPrice()) / 100) ) ;
+
+                die( json_encode( array( "tax_percentage" => $valorCalculado ) ) );
+            }
+
+        break;
         case 'update':
 
             $name = $_POST['name'];
@@ -198,9 +232,8 @@ if(isset($_GET['method'])){
             }
             die( json_encode( array("status" => $status, "message"=>$message) ) );
             break;
-            
-        case 'consult':
-            echo "consult";
+        case 'insertSales':
+            exit();
             break;
     }
 }
