@@ -5,7 +5,7 @@
 -- Dumped from database version 10.20
 -- Dumped by pg_dump version 10.20
 
--- Started on 2023-06-07 07:39:44
+-- Started on 2023-06-08 11:48:37
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -27,13 +27,28 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- TOC entry 2853 (class 0 OID 0)
+-- TOC entry 2856 (class 0 OID 0)
 -- Dependencies: 1
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
 
 COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
+
+--
+-- TOC entry 206 (class 1259 OID 16510)
+-- Name: id_product_sale_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.id_product_sale_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.id_product_sale_seq OWNER TO postgres;
 
 --
 -- TOC entry 198 (class 1259 OID 16454)
@@ -118,7 +133,7 @@ CREATE TABLE public.product (
 ALTER TABLE public.product OWNER TO postgres;
 
 --
--- TOC entry 2854 (class 0 OID 0)
+-- TOC entry 2857 (class 0 OID 0)
 -- Dependencies: 196
 -- Name: TABLE product; Type: COMMENT; Schema: public; Owner: postgres
 --
@@ -133,8 +148,11 @@ COMMENT ON TABLE public.product IS 'products tables';
 
 CREATE TABLE public.product_sale (
     id_product integer NOT NULL,
-    id_sale integer,
-    price numeric
+    id_sale integer NOT NULL,
+    price numeric,
+    tax_percentage_tax double precision,
+    id_product_sale integer NOT NULL,
+    quantity integer
 );
 
 
@@ -168,10 +186,10 @@ ALTER TABLE public.product_type_tax OWNER TO postgres;
 
 --
 -- TOC entry 203 (class 1259 OID 16492)
--- Name: sales; Type: TABLE; Schema: public; Owner: postgres
+-- Name: sale; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.sales (
+CREATE TABLE public.sale (
     id_sale integer NOT NULL,
     update_at time without time zone DEFAULT now(),
     create_at time without time zone,
@@ -179,7 +197,7 @@ CREATE TABLE public.sales (
 );
 
 
-ALTER TABLE public.sales OWNER TO postgres;
+ALTER TABLE public.sale OWNER TO postgres;
 
 --
 -- TOC entry 200 (class 1259 OID 16461)
@@ -196,7 +214,7 @@ CREATE TABLE public.tax (
 ALTER TABLE public.tax OWNER TO postgres;
 
 --
--- TOC entry 2836 (class 0 OID 16428)
+-- TOC entry 2838 (class 0 OID 16428)
 -- Dependencies: 196
 -- Data for Name: product; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -209,17 +227,22 @@ COPY public.product (id_product, name, description, price, create_at, update_at,
 
 
 --
--- TOC entry 2844 (class 0 OID 16498)
+-- TOC entry 2846 (class 0 OID 16498)
 -- Dependencies: 204
 -- Data for Name: product_sale; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.product_sale (id_product, id_sale, price) FROM stdin;
+COPY public.product_sale (id_product, id_sale, price, tax_percentage_tax, id_product_sale, quantity) FROM stdin;
+15	1	15.77	30.5	4	\N
+15	11	15.77	30.5	9	3
+15	11	15.77	30.5	10	7
+15	12	15.77	30.5	11	3
+15	12	15.77	30.5	12	7
 \.
 
 
 --
--- TOC entry 2837 (class 0 OID 16435)
+-- TOC entry 2839 (class 0 OID 16435)
 -- Dependencies: 197
 -- Data for Name: product_type; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -238,7 +261,7 @@ COPY public.product_type (id_product_type, name) FROM stdin;
 
 
 --
--- TOC entry 2842 (class 0 OID 16487)
+-- TOC entry 2844 (class 0 OID 16487)
 -- Dependencies: 202
 -- Data for Name: product_type_tax; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -253,17 +276,27 @@ COPY public.product_type_tax (id_product_type, id_tax) FROM stdin;
 
 
 --
--- TOC entry 2843 (class 0 OID 16492)
+-- TOC entry 2845 (class 0 OID 16492)
 -- Dependencies: 203
--- Data for Name: sales; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: sale; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.sales (id_sale, update_at, create_at, deleted_at) FROM stdin;
+COPY public.sale (id_sale, update_at, create_at, deleted_at) FROM stdin;
+1	22:57:44.832183	22:57:44.832183	\N
+2	11:28:07.818691	11:28:07.818691	\N
+3	11:30:30.135132	11:30:30.135132	\N
+6	11:36:01.095398	11:36:01.095398	\N
+7	11:37:02.388888	11:37:02.388888	\N
+8	11:40:05.509129	11:40:05.509129	\N
+9	11:41:07.606382	11:41:07.606382	\N
+10	11:44:29.369523	11:44:29.369523	\N
+11	11:45:18.411907	11:45:18.411907	\N
+12	11:46:38.833672	11:46:38.833672	\N
 \.
 
 
 --
--- TOC entry 2840 (class 0 OID 16461)
+-- TOC entry 2842 (class 0 OID 16461)
 -- Dependencies: 200
 -- Data for Name: tax; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -280,7 +313,16 @@ COPY public.tax (id_tax, description, tax_percentage) FROM stdin;
 
 
 --
--- TOC entry 2855 (class 0 OID 0)
+-- TOC entry 2858 (class 0 OID 0)
+-- Dependencies: 206
+-- Name: id_product_sale_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.id_product_sale_seq', 12, true);
+
+
+--
+-- TOC entry 2859 (class 0 OID 0)
 -- Dependencies: 198
 -- Name: id_product_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -289,7 +331,7 @@ SELECT pg_catalog.setval('public.id_product_seq', 15, true);
 
 
 --
--- TOC entry 2856 (class 0 OID 0)
+-- TOC entry 2860 (class 0 OID 0)
 -- Dependencies: 199
 -- Name: id_product_type_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -298,16 +340,16 @@ SELECT pg_catalog.setval('public.id_product_type_seq', 39, true);
 
 
 --
--- TOC entry 2857 (class 0 OID 0)
+-- TOC entry 2861 (class 0 OID 0)
 -- Dependencies: 205
 -- Name: id_sale_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.id_sale_seq', 1, false);
+SELECT pg_catalog.setval('public.id_sale_seq', 12, true);
 
 
 --
--- TOC entry 2858 (class 0 OID 0)
+-- TOC entry 2862 (class 0 OID 0)
 -- Dependencies: 201
 -- Name: id_tax_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -316,7 +358,7 @@ SELECT pg_catalog.setval('public.id_tax_seq', 7, true);
 
 
 --
--- TOC entry 2709 (class 2606 OID 16491)
+-- TOC entry 2711 (class 2606 OID 16491)
 -- Name: product_type_tax PRODUCT_TYPE_TAX_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -325,16 +367,16 @@ ALTER TABLE ONLY public.product_type_tax
 
 
 --
--- TOC entry 2711 (class 2606 OID 16497)
--- Name: sales SALE_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 2713 (class 2606 OID 16497)
+-- Name: sale SALE_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.sales
+ALTER TABLE ONLY public.sale
     ADD CONSTRAINT "SALE_pkey" PRIMARY KEY (id_sale);
 
 
 --
--- TOC entry 2707 (class 2606 OID 16465)
+-- TOC entry 2709 (class 2606 OID 16465)
 -- Name: tax TAX_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -343,7 +385,7 @@ ALTER TABLE ONLY public.tax
 
 
 --
--- TOC entry 2703 (class 2606 OID 16434)
+-- TOC entry 2705 (class 2606 OID 16434)
 -- Name: product pk_id_product; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -352,7 +394,16 @@ ALTER TABLE ONLY public.product
 
 
 --
--- TOC entry 2705 (class 2606 OID 16439)
+-- TOC entry 2715 (class 2606 OID 16509)
+-- Name: product_sale product_sale_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.product_sale
+    ADD CONSTRAINT product_sale_pkey PRIMARY KEY (id_product_sale);
+
+
+--
+-- TOC entry 2707 (class 2606 OID 16439)
 -- Name: product_type product_type_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -361,16 +412,7 @@ ALTER TABLE ONLY public.product_type
 
 
 --
--- TOC entry 2713 (class 2606 OID 16502)
--- Name: product_sale uk_product_sale; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.product_sale
-    ADD CONSTRAINT uk_product_sale UNIQUE (id_product, id_sale);
-
-
---
--- TOC entry 2714 (class 2606 OID 16482)
+-- TOC entry 2716 (class 2606 OID 16482)
 -- Name: product fk_product_type_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -378,7 +420,7 @@ ALTER TABLE ONLY public.product
     ADD CONSTRAINT fk_product_type_id FOREIGN KEY (product_type_id) REFERENCES public.product_type(id_product_type);
 
 
--- Completed on 2023-06-07 07:39:45
+-- Completed on 2023-06-08 11:48:38
 
 --
 -- PostgreSQL database dump complete
