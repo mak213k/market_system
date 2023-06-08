@@ -31,7 +31,7 @@ class TaxService{
 
     public function getTaxByIdProduct($id)
     {
-        exit('dim');
+       
         return $this->TaxRepository->getTaxByIdProduct($id);
     }
 

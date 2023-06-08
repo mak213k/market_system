@@ -85,6 +85,7 @@ $dadosProduct = $productController->index();
 
                     $(document).ready(function(){
 
+                      localStorage.clear();
                       $('#quantity').val('1');
                       fillProducts();
                     });
@@ -224,10 +225,11 @@ $dadosProduct = $productController->index();
 
                   $('#tb_product').append("<tr id=linha_"+linha+"><td>"+id+"</td><td>"+product+"</td><td>"+quantity+"</td><td>"+unity_price+"</td><td>"+tax+"</td><td>"+price+"</td><td><a href='javascript:;' class='exclude'><i class='fa fa-trash' id='' onclick='exclude("+linha+")'></i></a></td></tr>");
                   
-                  var obj = {"linha":"linha_"+linha, "id_product":id, "quantity":quantity};
+                  let index= "linha_"+linha;
+                  var obj = { "id_product":id, "quantity":quantity};
 
                   
-                  localStorage.setItem("linha_"+linha, JSON.stringify(obj));
+                  localStorage.setItem( index, JSON.stringify(obj));
                   
                   linha++;
                 }
@@ -237,6 +239,7 @@ $dadosProduct = $productController->index();
                 function exclude(linha)
                 {
                   $('#linha_'+linha).detach();
+                  localStorage.removeItem('linha_'+linha);
                 }        
           
 
@@ -253,21 +256,22 @@ $dadosProduct = $productController->index();
           function validateForm(e){
 
                     e.preventDefault();
-                  
-                    dadosForm ={};
+                    
+                    
+                    let value = {};
                     for (let i = 0; i < localStorage.length; i++){
-                      let key = localStorage.key(i);
-                      let value = localStorage.getItem(key);
-                      dadosForm = {key:value};
+
+                      value['linha_'+i] = localStorage.getItem(localStorage.key(i));
+                      
                     }
-
-                    alert('fim');
-
+                    
+                    
+                    
                     acao = $('#btn_submit_form').attr('acao');
 
-                    let address = 'Controller/sallesController.php?method='+acao;
-                                        
-                    $.post(address, dadosForm, function(callback){
+                    let address = 'Controller/saleController.php?method='+acao;
+
+                    $.post(address, value, function(callback){
                         
                         let classMessage = '';
                         if( callback.status == true )
